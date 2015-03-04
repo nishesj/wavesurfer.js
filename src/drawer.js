@@ -38,10 +38,19 @@ WaveSurfer.Drawer = {
         this.setupWrapperEvents();
     },
 
+    getBoundingClientRect: function() {
+      return this.wrapper.getBoundingClientRect();
+    },
+
+    getPointerEvent: function (event) {
+      return event.touches && event.touches.length ? event.touches[0] : event;
+    },
+
     handleEvent: function (e) {
         e.preventDefault();
         var bbox = this.wrapper.getBoundingClientRect();
-        return ((e.clientX - bbox.left + this.wrapper.scrollLeft) / this.wrapper.scrollWidth) || 0;
+        var clientX = this.getPointerEvent(e).clientX;
+        return ((clientX - bbox.left + this.wrapper.scrollLeft) / this.wrapper.scrollWidth) || 0;
     },
 
     setupWrapperEvents: function () {

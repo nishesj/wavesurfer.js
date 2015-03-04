@@ -37,6 +37,22 @@ WaveSurfer.Regions = {
         var start;
         var region;
 
+
+        var drag = function (e) {
+          if (!drag) { return; }
+
+          if (!region) {
+            region = my.add(params || {});
+          }
+
+          var duration = my.wavesurfer.getDuration();
+          var end = my.wavesurfer.drawer.handleEvent(e);
+          region.update({
+            start: Math.min(end * duration, start * duration),
+            end: Math.max(end * duration, start * duration)
+          });
+        };
+
         this.wrapper.addEventListener('mousedown', function (e) {
             drag = true;
             start = my.wavesurfer.drawer.handleEvent(e);
@@ -46,20 +62,26 @@ WaveSurfer.Regions = {
             drag = false;
             region = null;
         });
-        this.wrapper.addEventListener('mousemove', function (e) {
-            if (!drag) { return; }
+        this.wrapper.addEventListener('mousemove', drag);
 
-            if (!region) {
-                region = my.add(params || {});
-            }
+        this.wrapper.addEventListener('touchstart', function (e) {
 
-            var duration = my.wavesurfer.getDuration();
-            var end = my.wavesurfer.drawer.handleEvent(e);
-            region.update({
-                start: Math.min(end * duration, start * duration),
-                end: Math.max(end * duration, start * duration)
-            });
+        // check if its on the top half of the area
+        var bbox = my.wavesurfer.drawer.getBoundingClientRect();
+          if (e.touches[0].clientY < bbox.bottom - bbox.height / 3) {
+
+            drag = true;
+            start = my.wavesurfer.drawer.handleEvent(e);
+            region = null;
+          }
         });
+
+        this.wrapper.addEventListener('touchend', function () {
+          drag = false;
+          region = null;
+        });
+
+        this.wrapper.addEventListener('touchmove', drag);
     }
 };
 
@@ -278,6 +300,31 @@ WaveSurfer.Region = {
             my.wavesurfer.fireEvent('region-dblclick', my, e);
         });
 
+        this.element.addEventListener('touchend', function (e) {
+          my.fireEvent('mouseleave', e);
+          my.wavesurfer.fireEvent('region-mouseleave', my, e);
+        });
+
+        this.element.addEventListener('touchstart', function (e) {
+          e.preventDefault();
+
+          var currX = 0,
+              currY = 0;
+          // caching the current x
+          var cachedX = currX = e.touches[0].pageX;
+          // caching the current y
+          var cachedY = currY = e.touches[0].pageY;
+          // a touch event is detected
+          var touchStarted = true;
+          // detecting if after 200ms the finger is still in the same position
+          setTimeout(function (){
+            if ((cachedX === currX) && !touchStarted && (cachedY === currY)) {
+              my.fireEvent('click', e);
+              my.wavesurfer.fireEvent('region-click', my, e);
+            }
+          },200);
+        });
+
         /* Drag or resize on mousemove. */
         (this.drag || this.resize) && (function () {
             var duration = my.wavesurfer.getDuration();
@@ -331,6 +378,10 @@ WaveSurfer.Region = {
             my.element.addEventListener('mousedown', onDown);
             my.wrapper.addEventListener('mouseup', onUp);
             my.wrapper.addEventListener('mousemove', onMove);
+
+            my.element.addEventListener('touchstart', onDown);
+            my.wrapper.addEventListener('touchend', onUp);
+            my.wrapper.addEventListener('touchmove', onMove);
 
             my.on('remove', function () {
                 my.wrapper.removeEventListener('mouseup', onUp);
