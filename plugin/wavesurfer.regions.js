@@ -38,7 +38,7 @@ WaveSurfer.Regions = {
         var region;
 
 
-        var drag = function (e) {
+        var dragFn = function (e) {
           if (!drag) { return; }
 
           if (!region) {
@@ -62,12 +62,12 @@ WaveSurfer.Regions = {
             drag = false;
             region = null;
         });
-        this.wrapper.addEventListener('mousemove', drag);
+        this.wrapper.addEventListener('mousemove', dragFn);
 
         this.wrapper.addEventListener('touchstart', function (e) {
 
         // check if its on the top half of the area
-        var bbox = my.wavesurfer.drawer.getBoundingClientRect();
+          var bbox = my.wavesurfer.drawer.getBoundingClientRect();
           if (e.touches[0].clientY < bbox.bottom - bbox.height / 3) {
 
             drag = true;
@@ -81,7 +81,7 @@ WaveSurfer.Regions = {
           region = null;
         });
 
-        this.wrapper.addEventListener('touchmove', drag);
+        this.wrapper.addEventListener('touchmove', dragFn);
     }
 };
 
